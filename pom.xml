@@ -178,8 +178,8 @@
 
 	<distributionManagement>
 		<repository>
-			<id>github</id>
-			<name>github-packages</name>
+			<id>commons-webflux-parent</id>
+			<name>commons-webflux-parent</name>
 			<url>https://maven.pkg.github.com/miguel-armas-abt/commons-webflux-parent</url>
 		</repository>
 	</distributionManagement>
