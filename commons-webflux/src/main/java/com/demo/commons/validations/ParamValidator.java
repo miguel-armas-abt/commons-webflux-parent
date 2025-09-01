@@ -1,7 +1,8 @@
 package com.demo.commons.validations;
 
-import com.demo.commons.errors.exceptions.NoSuchParamMapperException;
+import com.demo.commons.restserver.utils.RestServerUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -13,15 +14,20 @@ public class ParamValidator {
   private final List<ParamMapper> paramMappers;
   private final BodyValidator bodyValidator;
 
-  public <T> Mono<T> validateAndGet(Map<String, String> paramsMap, Class<T> paramClass) {
-    T params = (T) selectMapper(paramClass).map(paramsMap);
-    return bodyValidator.validateAndGet(params);
+  public <T> Mono<Map.Entry<T, Map<String, String>>> validateHeadersAndGet(ServerRequest serverRequest, Class<T> paramClass) {
+    Map<String, String> headers = RestServerUtils.extractHeadersAsMap(serverRequest);
+    return validateAndGet(headers, paramClass);
   }
 
-  private ParamMapper selectMapper(Class<?> paramClass) {
-    return paramMappers.stream()
-        .filter(mapper -> mapper.supports(paramClass))
-        .findFirst()
-        .orElseThrow(() -> new NoSuchParamMapperException(paramClass));
+  public <T> Mono<Map.Entry<T, Map<String, String>>> validateQueryParamsAndGet(ServerRequest serverRequest, Class<T> paramClass) {
+    Map<String, String> headers = RestServerUtils.extractQueryParamsAsMap(serverRequest);
+    return validateAndGet(headers, paramClass);
+  }
+
+  public <T> Mono<Map.Entry<T, Map<String, String>>> validateAndGet(Map<String, String> paramsMap, Class<T> paramClass) {
+    ParamMapper<T> mapper = ParamMapper.selectMapper(paramClass, paramMappers);
+    Map.Entry<T, Map<String, String>> tuple = mapper.map(paramsMap);
+    return bodyValidator.validateAndGet(tuple.getKey())
+        .map(params -> tuple);
   }
 }

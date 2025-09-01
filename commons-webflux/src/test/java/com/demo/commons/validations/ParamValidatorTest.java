@@ -14,6 +14,7 @@ import reactor.test.StepVerifier;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,10 +28,15 @@ class ParamValidatorTest {
     private final String id;
   }
 
-  public static class DummyParamMapper implements ParamMapper {
+  public static class DummyParamMapper implements ParamMapper<DummyParams> {
     @Override
-    public Object map(Map<String, String> params) {
-      return new DummyParams(params.get("id"));
+    public Map.Entry<DummyParams, Map<String, String>> map(Map<String, String> params) {
+      DummyParams param = new DummyParams(params.get("id"));
+
+      Map<String, String> paramMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      paramMap.put("id", param.getId());
+
+      return Map.entry(param, paramMap);
     }
 
     @Override
@@ -51,7 +57,7 @@ class ParamValidatorTest {
     Map<String, String> paramsMap = Map.of("id", paramValue);
 
     // Act
-    Mono<DummyParams> resultMono = validator.validateAndGet(paramsMap, DummyParams.class);
+    Mono<DummyParams> resultMono = validator.validateAndGet(paramsMap, DummyParams.class).map(Map.Entry::getKey);
 
     // Assert
     StepVerifier.create(resultMono)
