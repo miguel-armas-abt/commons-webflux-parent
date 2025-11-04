@@ -6,7 +6,9 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.server.ServerRequest;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.Map;
@@ -45,13 +47,12 @@ public class RestServerUtils {
   }
 
   public static Map<String, String> extractQueryParamsAsMap(ServerRequest serverRequest) {
-    return serverRequest.queryParams()
-        .entrySet()
-        .stream()
-        .collect(Collectors.toMap(
-            Map.Entry::getKey,
-            entry -> String.join(Symbol.COMMA, entry.getValue())
-        ));
+    return toMap(serverRequest.queryParams());
+  }
+
+  public static Mono<Map<String, String>> extractFormDataAsMap(ServerRequest serverRequest) {
+    return serverRequest.formData()
+        .map(RestServerUtils::toMap);
   }
 
   public static Consumer<HttpHeaders> buildResponseHeaders(ServerRequest.Headers requestHeaders) {
@@ -61,4 +62,13 @@ public class RestServerUtils {
             , () -> {});
   }
 
+  private static Map<String, String> toMap(MultiValueMap<String, String> multiValue) {
+    return multiValue
+        .entrySet()
+        .stream()
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> String.join(Symbol.COMMA, entry.getValue())
+        ));
+  }
 }

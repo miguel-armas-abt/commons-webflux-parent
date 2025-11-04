@@ -20,8 +20,13 @@ public class ParamValidator {
   }
 
   public <T> Mono<Map.Entry<T, Map<String, String>>> validateQueryParamsAndGet(ServerRequest serverRequest, Class<T> paramClass) {
-    Map<String, String> headers = RestServerUtils.extractQueryParamsAsMap(serverRequest);
-    return validateAndGet(headers, paramClass);
+    Map<String, String> queryParams = RestServerUtils.extractQueryParamsAsMap(serverRequest);
+    return validateAndGet(queryParams, paramClass);
+  }
+
+  public <T> Mono<Map.Entry<T, Map<String, String>>> validateFormDataAndGet(ServerRequest serverRequest, Class<T> paramClass) {
+    return RestServerUtils.extractFormDataAsMap(serverRequest)
+        .flatMap(formData -> validateAndGet(formData, paramClass));
   }
 
   public <T> Mono<Map.Entry<T, Map<String, String>>> validateAndGet(Map<String, String> paramsMap, Class<T> paramClass) {
